@@ -23,7 +23,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            f'lls_calibration = {package_name}.lls_calibration:main',
+            f'lls_calibration = {package_name}.record_calibration_data:main',
+            f'calibrate_lls = {package_name}.calibrate_lls:main',
         ],
     },
 )

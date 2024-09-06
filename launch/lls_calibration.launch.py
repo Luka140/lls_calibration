@@ -9,10 +9,15 @@ def generate_launch_description():
 
     pkg = "lls_calibration"
 
-    gap_detector = Node(
+    data_collector = Node(
         package=pkg,
         executable="lls_calibration",
-        )
+    )
+
+    calibrator = Node(
+        package=pkg,
+        executable="calibrate_lls",
+    )
     
-    ld = LaunchDescription([gap_detector])
-    return ld
+    return LaunchDescription([data_collector,
+                              calibrator])
