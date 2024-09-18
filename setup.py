@@ -25,6 +25,7 @@ setup(
         'console_scripts': [
             f'lls_calibration = {package_name}.record_calibration_data:main',
             f'calibrate_lls = {package_name}.calibrate_lls:main',
+            f'radius_detector = {package_name}.detect_sphere_diameter:main',
         ],
     },
 )

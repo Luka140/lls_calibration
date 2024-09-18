@@ -24,12 +24,16 @@ import pyransac3d as pyrsc
 # TODO try with different number of arcs
 # TODO parametrize 
 
+# TODO this could be significantly more efficient by transforming the center position to the pcl frame instead of the other way around
+
 class LLSCalibrator(Node):
 
     def __init__(self) -> None:
         super().__init__('lls_calibrator')
 
         config_path = os.path.join(os.getcwd(), 'src', 'lls_calibration', 'config')
+        self.data_collection_path = os.path.join(os.getcwd(), 'src', 'lls_calibration', 'data')
+    
         self.calibration_path = os.path.join(config_path, f'calibration_{datetime.now().isoformat(timespec="seconds")}.csv')
 
         calibration_msg_topic       = 'calibration_data'
@@ -97,6 +101,16 @@ class LLSCalibrator(Node):
             
             # Create a transformation matrix from the transformation message obtained from tf_trans
             tf_mat = self.tf_transform_to_matrix(transform)
+
+            file_time = datetime.now().isoformat(timespec="microseconds")
+            # tf_mat.tofile(os.path.join(self.data_collection_path,f'tf_lls2global_r{self.sphere_radius}_{file_time}'), sep=',')
+            np.savetxt(os.path.join(self.data_collection_path,f'tf_lls2global_r{self.sphere_radius}_{file_time}.txt'),
+                       tf_mat)
+
+            # filtered_points.tofile(os.path.join(self.data_collection_path,f'pcl_arc_r{self.sphere_radius}_{file_time}'), sep=',')
+            np.savetxt(os.path.join(self.data_collection_path,f'pcl_arc_r{self.sphere_radius}_{file_time}.txt'),
+                       filtered_points)
+
             loaded_arcs.append((o3d_pcl, tf_mat))
             
             # Crude initial transform to get an initial guess for the center position
