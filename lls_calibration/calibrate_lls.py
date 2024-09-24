@@ -47,8 +47,8 @@ class LLSCalibrator(Node):
 
         self.datapoints: list[tuple[PointCloud2, TransformStamped]] = []
 
-        self.sphere_radius = 0.145 / 2 
-        self.ransac_threshold = 1e-4
+        self.sphere_radius = 0.144 / 2 
+        self.ransac_threshold = 1e-3
      
         # XYZW 
         self.approx_rotation = np.array([0., np.sqrt(2)/2, np.sqrt(2)/2, 0.])
@@ -74,9 +74,9 @@ class LLSCalibrator(Node):
 
         self.get_logger().info("Loading pointclouds and filtering using RANSAC")
         # Preload messages to usable objects 
-        i = 0 
-        for pointcloud, transform in self.datapoints:
-            i += 1 
+    
+        for i, [pointcloud, transform] in enumerate(self.datapoints):
+
             # Open all pointcloud messages and create o3d pointclouds 
             loaded_array = np.frombuffer(pointcloud.data, dtype=np.float32).reshape(-1, len(pointcloud.fields))[:,:3]
 
@@ -84,13 +84,15 @@ class LLSCalibrator(Node):
                 continue 
             if not np.any(np.isfinite(loaded_array)):
                 continue
+
+            loaded_array = loaded_array[~np.isnan(loaded_array).any(axis=1)] 
+            loaded_array = loaded_array[~(abs(loaded_array) > 2.).any(axis=1)] 
+            loaded_array = loaded_array[np.where(abs(loaded_array[:,2]) > 10e-3)] 
+
             if loaded_array.size == 0:
                 continue
 
-            loaded_array = loaded_array[~np.isnan(loaded_array).any(axis=1)] 
-            loaded_array = loaded_array[~(abs(loaded_array) > 10.).any(axis=1)] 
-
-            self.get_logger().info(f"Filtering pointcloud {i} out of {len(self.datapoints)}")
+            self.get_logger().info(f"Filtering pointcloud {i} ({loaded_array.shape[0]} points) out of {len(self.datapoints)}")
             sphere_center, axis, sphere_radius, inlier_idx = pyrsc.Circle().fit(loaded_array, thresh=self.ransac_threshold, maxIteration=1000)
             self.get_logger().info(f'Nr of inliers: {len(inlier_idx)}')
             filtered_points = loaded_array[np.array(inlier_idx)]
@@ -163,8 +165,8 @@ class LLSCalibrator(Node):
             arc_copy = copy.deepcopy(arcs)
             for pointcloud, transform in arc_copy:
                 tf = transform @ flange_lls_transform
-                # combined_pcl += pointcloud.transform(tf)
-                combined_pcl += pointcloud.transform(flange_lls_transform).transform(transform)
+                combined_pcl += pointcloud.transform(tf)
+                # combined_pcl += pointcloud.transform(tf).transform(transform)
 
             self.pcl_publisher.publish(self.create_pcl_msg(combined_pcl))
             self.marker_publisher.publish(self.create_marker_msg(centre_point_sphere))

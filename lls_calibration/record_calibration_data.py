@@ -7,18 +7,14 @@ from tf2_ros import TransformListener, LookupException, ExtrapolationException
 from tf2_ros.buffer import Buffer
 
 from std_msgs.msg import Empty
-from sensor_msgs.msg import PointCloud2, PointField
-from geometry_msgs.msg import TransformStamped, Pose
+from sensor_msgs.msg import PointCloud2
+from geometry_msgs.msg import TransformStamped
 from keyboard_msgs.msg import Key
-from visualization_msgs.msg import Marker
 from calibration_msgs.msg import CalibrationDatapoint
 
 import os
-import copy
-import numpy as np
 from datetime import datetime
-from scipy.optimize import least_squares, minimize, Bounds
-from scipy.spatial.transform import Rotation as R
+
 
 
 class LLSCalibrationDatacollector(Node):
@@ -30,13 +26,23 @@ class LLSCalibrationDatacollector(Node):
         config_path = os.path.join(os.getcwd(), 'src', 'lls_calibration', 'config')
         self.calibration_path = os.path.join(config_path, f'calibration_{datetime.now().isoformat(timespec="seconds")}.csv')
 
-        controller_name = 'ur_script'
-        trigger_topic   = f"/{controller_name}/trigger_move"
-        pcl_topic       = 'scancontrol_pointcloud'
-        laser_on_topic  = '/laseron'
-        laser_off_topic = '/laseroff'
-        calibration_msg = 'calibration_data'
-        calibrate_topic = 'calibrate_lls'
+
+        # Declare parameters with default values
+        self.declare_parameter('trigger_topic', '/trigger_move')
+        self.declare_parameter('pcl_topic', 'scancontrol_pointcloud')
+        self.declare_parameter('laser_on_topic', '/laseron')
+        self.declare_parameter('laser_off_topic', '/laseroff')
+        self.declare_parameter('calibration_msg_topic', 'calibration_data')
+        self.declare_parameter('calibrate_topic', 'calibrate_lls')
+
+        # Retrieve the parameters
+        trigger_topic   = self.get_parameter('trigger_topic').get_parameter_value().string_value
+        pcl_topic       = self.get_parameter('pcl_topic').get_parameter_value().string_value
+        laser_on_topic  = self.get_parameter('laser_on_topic').get_parameter_value().string_value
+        laser_off_topic = self.get_parameter('laser_off_topic').get_parameter_value().string_value
+        calibration_msg = self.get_parameter('calibration_msg_topic').get_parameter_value().string_value
+        calibrate_topic = self.get_parameter('calibrate_topic').get_parameter_value().string_value
+
 
         self.measurement_interval = 0.5
 
