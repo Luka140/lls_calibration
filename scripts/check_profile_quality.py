@@ -19,13 +19,16 @@ def test_consistency_ransac(profile, runs=30, ransac_threshold=1e-4):
     rad, centerpts = np.array(radii), np.stack(centerpoints)
     mean_rad, mean_ctpt = np.mean(rad), np.mean(centerpts, axis=0)
     mad_rad, mad_ctp = np.mean(np.abs(rad-mean_rad)), np.mean(np.abs(centerpts-mean_ctpt), axis=0)
-    return mad_rad, mad_ctp
+
+    rad_stdev = np.std(rad)
+    ctp_stdev = np.std(centerpts, axis=0)
+    return mad_rad, mad_ctp, rad_stdev, ctp_stdev
 
 
 if __name__=='__main__':
 
     pcls, tfs = [], []
-    test_folder = Path(__file__).parent.parent.absolute() / "data/set11"
+    test_folder = Path(__file__).parent.parent.absolute() / "data/set13"
 
     for path in sorted(test_folder.iterdir()):
         if 'pcl' in path.name:
@@ -43,7 +46,8 @@ if __name__=='__main__':
     # plt.show()
 
     for i, pcl in enumerate(pcls):
-        rad_std, ctp_std = test_consistency_ransac(pcl, runs=30, ransac_threshold=1e-4)
-        print(f"profile {i}: radius mean abs deviation: {1000 * rad_std:.4f} mm  -  centerpoint mean abs deviation: {np.array2string(1000 * ctp_std, suppress_small=True, floatmode='fixed', precision=4)} mm")
+        rad_mad, ctp_mad, rad_std, ctp_std = test_consistency_ransac(pcl, runs=30, ransac_threshold=1e-4)
+        print(f"profile {i}: radius mean abs deviation: {1000 * rad_mad:.4f} mm  -  centerpoint mean abs deviation: {np.array2string(1000 * ctp_mad, suppress_small=True, floatmode='fixed', precision=4)} mm")
+        print(f"profile {i}: radius stdev: {1000 * rad_std:.4f} mm  -  centerpoint stdev: {np.array2string(1000 * ctp_std, suppress_small=True, floatmode='fixed', precision=4)} mm\n")
 
 

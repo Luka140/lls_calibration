@@ -38,7 +38,7 @@ class LLSCalibrator(Node):
 
         calibration_msg_topic       = 'calibration_data'
         calibration_trigger_topic   = 'calibrate_lls'
-        self.calibration_subscriber = self.create_subscription(CalibrationDatapoint, calibration_msg_topic, self.update_data, 1)
+        self.calibration_subscriber = self.create_subscription(CalibrationDatapoint, calibration_msg_topic, self.update_data, 20)
         self.calibration_trigger    = self.create_subscription(Empty, calibration_trigger_topic, self.calibrate, 1)
         self.pcl_publisher          = self.create_publisher(PointCloud2, 'calibration_clouds', 1)
         self.marker_publisher       = self.create_publisher(Marker, "visualization_marker", 1)
@@ -75,7 +75,7 @@ class LLSCalibrator(Node):
         self.get_logger().info("Loading pointclouds and filtering using RANSAC")
         # Preload messages to usable objects 
     
-        for i, [pointcloud, transform] in enumerate(self.datapoints):
+        for i, [pointcloud, transform] in enumerate(sorted(self.datapoints, key=lambda x: x[0].header.stamp.sec + x[0].header.stamp.nanosec / 10**9)):
 
             # Open all pointcloud messages and create o3d pointclouds 
             loaded_array = np.frombuffer(pointcloud.data, dtype=np.float32).reshape(-1, len(pointcloud.fields))[:,:3]
